@@ -1,5 +1,6 @@
 package com.faendir.zachtronics.bot.model
 
+import com.faendir.zachtronics.bot.discord.commands.arg.Argument
 import com.faendir.zachtronics.bot.leaderboards.Leaderboard
 
 interface Game<C : Category<C, S, P>, S : Score, P : Puzzle> {
@@ -9,5 +10,5 @@ interface Game<C : Category<C, S, P>, S : Score, P : Puzzle> {
 
     fun findPuzzleByName(name: String): List<P>
 
-    fun parseScore(puzzle: P, string: String): S?
+    fun parseScore(string: String): S?
 }

@@ -21,7 +21,7 @@ class SubmitCommand : Command {
     override fun <C : Category<C, S, P>, S : Score, P : Puzzle> handleMessage(game: Game<C, S, P>, author: User, channel: TextChannel, message: Message, command: MatchResult): String {
         return findPuzzle(game, command.groups["puzzle"]!!.value) { puzzle ->
             val scoreString = command.groups["score"]!!.value
-            val score = game.parseScore(puzzle, scoreString) ?: return@findPuzzle "sorry, I couldn't parse your score ($scoreString)."
+            val score = game.parseScore(scoreString) ?: return@findPuzzle "sorry, I couldn't parse your score ($scoreString)."
             val leaderboardCategories = game.leaderboards.mapNotNull { it.findCategoriesSupporting(puzzle, score) }
             if (leaderboardCategories.isEmpty()) {
                 return@findPuzzle "sorry, I could not find any category for ${score.contentDescription}"

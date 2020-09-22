@@ -1,7 +1,7 @@
 package com.faendir.zachtronics.bot.model.om
 
 enum class OmScorePart(val key: Char) {
-    HEIGHT('h'), WIDTH('w'), COST('g'), CYCLES('c'), AREA('a'), INSTRUCTIONS('i'), COMPUTED('#');
+    HEIGHT('h'), WIDTH('w'), COST('g'), CYCLES('c'), AREA('a'), INSTRUCTIONS('i'), AREA_OR_INSTRUCTIONS('?'), COMPUTED('#');
 
     companion object {
         fun parse(string: String): Pair<OmScorePart, Double>? {

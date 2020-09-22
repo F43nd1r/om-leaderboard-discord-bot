@@ -16,6 +16,7 @@ class ShowCommand : Command {
     override val helpText: String = "!show <category> <puzzle>"
 
     override fun <C : Category<C, S, P>, S : Score, P : Puzzle> handleMessage(game: Game<C, S, P>, author: User, channel: TextChannel, message: Message, command: MatchResult): String {
+        val arguments = parseArguments(game.showArguments, message.contentRaw) ?:
         val categoryString = command.groups["category"]!!.value
         return findPuzzle(game, command.groups["puzzle"]!!.value) { puzzle ->
             val (leaderboard, category) = game.leaderboards.flatMap { leaderboard -> leaderboard.supportedCategories.map { leaderboard to it } }

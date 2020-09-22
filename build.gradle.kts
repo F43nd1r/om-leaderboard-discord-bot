@@ -30,6 +30,7 @@ dependencies {
     implementation("org.eclipse.jgit:org.eclipse.jgit:5.8.1.202007141445-r")
     implementation("com.github.rockswang:java-curl:1.2.2.2")
     implementation("com.faendir.jraw:JRAW:1.2.0")
+    implementation("com.marcinmoskala:DiscreteMathToolkit:1.0.3")
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 

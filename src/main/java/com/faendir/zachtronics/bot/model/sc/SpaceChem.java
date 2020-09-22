@@ -46,7 +46,7 @@ public class SpaceChem implements Game<ScCategory, ScScore, ScPuzzle> {
 
     @Nullable
     @Override
-    public ScScore parseScore(@NotNull ScPuzzle puzzle, @NotNull String string) {
+    public ScScore parseScore(@NotNull String string) {
         return parseScore(string);
     }
 

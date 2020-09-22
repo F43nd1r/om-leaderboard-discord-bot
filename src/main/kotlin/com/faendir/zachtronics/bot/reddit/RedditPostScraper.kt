@@ -15,7 +15,6 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.io.File
 import java.time.Instant
-import java.time.temporal.ChronoUnit
 import java.util.*
 
 @Service
@@ -135,7 +134,7 @@ class RedditPostScraper(private val redditService: RedditService, private val di
             val puzzle = puzzles.first()
             command.groupValues.drop(2).forEach inner@{ group ->
                 val subCommand = scoreRegex.matchEntire(group) ?: return@inner
-                val score: OmScore = opusMagnum.parseScore(puzzle, subCommand.groups["score"]!!.value) ?: return@inner
+                val score: OmScore = opusMagnum.parseScore(subCommand.groups["score"]!!.value) ?: return@inner
                 val leaderboardCategories = opusMagnum.leaderboards.mapNotNull { it.findCategoriesSupporting(puzzle, score) }
                 if (leaderboardCategories.isEmpty()) {
                     return@inner
