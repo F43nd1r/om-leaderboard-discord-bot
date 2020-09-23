@@ -10,16 +10,16 @@ import net.dv8tion.jda.api.entities.Message
 import org.springframework.stereotype.Component
 
 @Component
-class CategoryArgument : Argument<List<Category<*, *, *>>, Category<*, *, *>> {
+class CategoriesArgument : Argument<List<Category<*, *, *>>, List<Category<*, *, *>>> {
 
-    override val argumentType: Class<*> = Category::class.java
-    override val argumentName: String = "category"
+    override val argumentType: Class<*> = List::class.java
+    override val argumentName: String = "categories"
     override val displayName: String = "category"
 
     override fun <C : Category<C, S, P>, S : Score, P : Puzzle> getAllPossibleMatches(game: Game<*, C, S, P>, message: Message, input: List<IndexedValue<String>>): List<Match<List<Category<*, *, *>>>> =
         input.mapNotNull { string -> game.findCategoryByName(string.value).takeIf { it.isNotEmpty() }?.let { Match(string.index, it) } }
 
-    override fun getActualResult(args: ArgumentIntermediateMap): ResultOrMessage<Category<*, *, *>> {
+    override fun getActualResult(args: ArgumentIntermediateMap): ResultOrMessage<List<Category<*, *, *>>> {
         val puzzleResult = args.findKey<PuzzleArgument>()?.getActualResult(args)
         if(puzzleResult is ResultOrMessage.Failure) return puzzleResult.typed()
         val puzzle = (puzzleResult as ResultOrMessage.Success?)?.result
@@ -32,6 +32,6 @@ class CategoryArgument : Argument<List<Category<*, *, *>>, Category<*, *, *>> {
             puzzle?.let { category.supportsPuzzle(it) } ?: true && score?.let { category.supportsScore(score) } ?: true
         }
         if(result.isEmpty()) return ResultOrMessage.Failure("sorry, the category \"${categories.first().displayName}\" does not support the puzzle ${puzzle?.displayName}.")
-        return ResultOrMessage.Success(result.first())
+        return ResultOrMessage.Success(result)
     }
 }

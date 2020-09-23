@@ -1,12 +1,13 @@
 package com.faendir.zachtronics.bot.model.om
 
+import com.faendir.zachtronics.bot.leaderboards.OmLeaderboard
 import com.faendir.zachtronics.bot.leaderboards.git.GitLeaderboard
 import com.faendir.zachtronics.bot.leaderboards.reddit.RedditLeaderboard
 import com.faendir.zachtronics.bot.model.Game
 import org.springframework.stereotype.Component
 
 @Component
-class OpusMagnum(gitLeaderboard: GitLeaderboard, redditLeaderboard: RedditLeaderboard) : Game<OmCategory, OmScore, OmPuzzle> {
+class OpusMagnum(gitLeaderboard: GitLeaderboard, redditLeaderboard: RedditLeaderboard) : Game<OmLeaderboard, OmCategory, OmScore, OmPuzzle> {
     override val discordChannel = "opus-magnum"
     override fun findPuzzleByName(name: String) = OmPuzzle.values().filter { it.displayName.contains(name, ignoreCase = true) }
     override fun parseScore(string: String): OmScore? {
@@ -33,6 +34,8 @@ class OpusMagnum(gitLeaderboard: GitLeaderboard, redditLeaderboard: RedditLeader
         }
         return null
     }
+
+    override fun findCategoryByName(name: String): List<OmCategory> = OmCategory.values().filter { it.displayName.equals(name, ignoreCase = true) }
 
     override val leaderboards = listOf(gitLeaderboard, redditLeaderboard)
 }

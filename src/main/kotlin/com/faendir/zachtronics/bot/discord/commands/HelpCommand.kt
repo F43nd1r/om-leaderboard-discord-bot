@@ -13,11 +13,10 @@ import org.springframework.stereotype.Component
 
 @Component
 class HelpCommand(@Lazy private val commands: List<Command>) : Command {
-    override val regex: Regex = Regex("!help")
     override val name: String = "help"
     override val helpText: String = "This command"
 
-    override fun <C : Category<C, S, P>, S : Score, P : Puzzle> handleMessage(game: Game<C, S, P>, author: User, channel: TextChannel, message: Message, command: MatchResult) =
+    override fun handleMessage(game: Game<*,*, *, *>, message: Message) =
         "Available commands:\n```${makeCommandTable()}```\nSupported categories:\n```${makeCategoryList(game.leaderboards)}```"
 
     private fun makeCommandTable(): String {
@@ -26,7 +25,7 @@ class HelpCommand(@Lazy private val commands: List<Command>) : Command {
         return commands.joinToString("\n") { it.name.padEnd(nameLength) + it.helpText.padEnd(textLength) }
     }
 
-    private fun makeCategoryList(leaderboards: List<Leaderboard<*, *, *>>): String {
+    private fun makeCategoryList(leaderboards: List<Leaderboard>): String {
         return leaderboards.flatMap { it.supportedCategories }
             .distinctBy { it.displayName }
             .joinToString("\n") { category -> "${category.displayName} (${category.contentDescription})" }

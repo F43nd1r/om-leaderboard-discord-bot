@@ -2,10 +2,11 @@ package com.faendir.zachtronics.bot.reddit
 
 import com.faendir.zachtronics.bot.discord.DiscordService
 import com.faendir.zachtronics.bot.leaderboards.UpdateResult
+import com.faendir.zachtronics.bot.model.Author
+import com.faendir.zachtronics.bot.model.Link
 import com.faendir.zachtronics.bot.model.om.OmScore
 import com.faendir.zachtronics.bot.model.om.OpusMagnum
 import com.faendir.zachtronics.bot.utils.DateSerializer
-import com.faendir.zachtronics.bot.utils.findCategoriesSupporting
 import kotlinx.serialization.json.Json
 import net.dean.jraw.models.PublicContribution
 import net.dean.jraw.models.SubredditSort
@@ -74,7 +75,13 @@ class RedditPostScraper(private val redditService: RedditService, private val di
     @Scheduled(fixedRate = 1000L * 60 * 60)
     fun pullFromReddit() {
         val now = Instant.now() //capture timestamp before processing
-        val submissionThread = redditService.subreddit(Subreddit.OPUS_MAGNUM).posts().sorting(SubredditSort.HOT).limit(5).build().asSequence().flatten()
+        val submissionThread = redditService.subreddit(Subreddit.OPUS_MAGNUM)
+            .posts()
+            .sorting(SubredditSort.HOT)
+            .limit(5)
+            .build()
+            .asSequence()
+            .flatten()
             .find { it.title.contains("official record submission thread", ignoreCase = true) }
         val lastUpdate: Date? = redditService.access { File(repo, timestampFile).takeIf { it.exists() }?.readText() }?.let { Json.decodeFromString(DateSerializer, it) }
         var hasNewComment = false
@@ -108,7 +115,7 @@ class RedditPostScraper(private val redditService: RedditService, private val di
                 }
             }
         }
-        if(hasNewComment) {
+        if (hasNewComment) {
             redditService.access {
                 val timestamp = File(repo, timestampFile)
                 timestamp.writeText(Json.encodeToString(DateSerializer, Date.from(now)))
@@ -135,16 +142,18 @@ class RedditPostScraper(private val redditService: RedditService, private val di
             command.groupValues.drop(2).forEach inner@{ group ->
                 val subCommand = scoreRegex.matchEntire(group) ?: return@inner
                 val score: OmScore = opusMagnum.parseScore(subCommand.groups["score"]!!.value) ?: return@inner
-                val leaderboardCategories = opusMagnum.leaderboards.mapNotNull { it.findCategoriesSupporting(puzzle, score) }
+                val leaderboardCategories = opusMagnum.leaderboards.mapNotNull { leaderboard ->
+                    leaderboard.supportedCategories.filter { it.supportsPuzzle(puzzle) && it.supportsScore(score) }.takeIf { it.isNotEmpty() }?.let { leaderboard to it }
+                }
                 if (leaderboardCategories.isEmpty()) {
                     return@inner
                 }
                 val link = subCommand.groups["link"]!!.value
                 val results = leaderboardCategories.map { (leaderboard, categories) ->
                     update = true
-                    leaderboard.update(comment.author, puzzle, categories.toList(), score, link)
+                    leaderboard.update(Author(comment.author), puzzle, categories.toList(), score, Link(link))
                 }
-                val successes = results.filterIsInstance<UpdateResult.Success<*, *>>()
+                val successes = results.filterIsInstance<UpdateResult.Success>()
                 if (successes.isNotEmpty()) {
                     discordService.sendMessage(opusMagnum.discordChannel, "New record by ${comment.author} on reddit: ${puzzle.displayName} ${
                         successes.flatMap { it.oldScores.keys }.map { it.displayName }

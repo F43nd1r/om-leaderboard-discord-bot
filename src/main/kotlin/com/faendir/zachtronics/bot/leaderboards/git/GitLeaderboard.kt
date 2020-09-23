@@ -2,8 +2,12 @@ package com.faendir.zachtronics.bot.leaderboards.git
 
 import com.faendir.zachtronics.bot.config.GitProperties
 import com.faendir.zachtronics.bot.git.GitRepository
-import com.faendir.zachtronics.bot.leaderboards.Leaderboard
+import com.faendir.zachtronics.bot.leaderboards.OmLeaderboard
 import com.faendir.zachtronics.bot.leaderboards.UpdateResult
+import com.faendir.zachtronics.bot.model.Author
+import com.faendir.zachtronics.bot.model.Category
+import com.faendir.zachtronics.bot.model.Link
+import com.faendir.zachtronics.bot.model.Score
 import com.faendir.zachtronics.bot.model.om.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -17,7 +21,7 @@ import javax.annotation.PostConstruct
 
 @Component
 class GitLeaderboard(gitProperties: GitProperties) : GitRepository(gitProperties, "om-leaderboard", "https://github.com/F43nd1r/om-leaderboard.git"),
-                                                     Leaderboard<OmCategory, OmScore, OmPuzzle> {
+                                                     OmLeaderboard {
     companion object {
         private const val scoreFileName = "scores.json"
     }
@@ -36,18 +40,18 @@ class GitLeaderboard(gitProperties: GitProperties) : GitRepository(gitProperties
         }
     }
 
-    override fun update(user: String, puzzle: OmPuzzle, categories: List<OmCategory>, score: OmScore, link: String): UpdateResult<OmCategory, OmScore> {
+    override fun update(user: Author, puzzle: OmPuzzle, categories: List<OmCategory>, score: OmScore, link: Link): UpdateResult {
         return access {
             val scoreFile = File(repo, scoreFileName)
             val recordList: RecordList = Json.decodeFromString(scoreFile.readText())
-            val betterExists = mutableMapOf<OmCategory, OmScore>()
-            val success = mutableMapOf<OmCategory, OmScore?>()
+            val betterExists = mutableMapOf<Category<*, *, *>, Score>()
+            val success = mutableMapOf<Category<*, *, *>, Score?>()
             for (category in categories) {
                 val oldRecord = recordList[puzzle]?.records?.find { it.category == category }
-                if (oldRecord == null || category.isBetterOrEqual(score, oldRecord.score) && oldRecord.link != link) {
+                if (oldRecord == null || category.isBetterOrEqual(score, oldRecord.score) && oldRecord.link != link.url) {
                     recordList[puzzle] = (recordList[puzzle] ?: PuzzleEntry(mutableListOf())).apply {
                         if (oldRecord != null) records.remove(oldRecord)
-                        records.add(OmRecord(category, category.normalizeScore(score), link))
+                        records.add(OmRecord(category, category.normalizeScore(score), link.url))
                     }
                     success[category] = oldRecord?.score
                 } else {
@@ -55,7 +59,7 @@ class GitLeaderboard(gitProperties: GitProperties) : GitRepository(gitProperties
                 }
             }
             return@access if (success.isNotEmpty()) {
-                updateRemote(scoreFile, recordList, user, puzzle, score, success.keys.map { it.displayName })
+                updateRemote(scoreFile, recordList, user.name, puzzle, score, success.keys.map { it.displayName })
                 UpdateResult.Success(success)
             } else {
                 UpdateResult.BetterExists(betterExists)

@@ -1,8 +1,16 @@
 package com.faendir.zachtronics.bot.leaderboards.reddit
 
+import com.faendir.zachtronics.bot.discord.commands.Show
+import com.faendir.zachtronics.bot.discord.commands.arg.Argument
+import com.faendir.zachtronics.bot.discord.commands.findAnnotatedMethod
+import com.faendir.zachtronics.bot.discord.commands.getArgs
 import com.faendir.zachtronics.bot.git.GitRepository
-import com.faendir.zachtronics.bot.leaderboards.Leaderboard
+import com.faendir.zachtronics.bot.leaderboards.OmLeaderboard
 import com.faendir.zachtronics.bot.leaderboards.UpdateResult
+import com.faendir.zachtronics.bot.model.Author
+import com.faendir.zachtronics.bot.model.Category
+import com.faendir.zachtronics.bot.model.Link
+import com.faendir.zachtronics.bot.model.Score
 import com.faendir.zachtronics.bot.model.om.*
 import com.faendir.zachtronics.bot.model.om.OmCategory.*
 import com.faendir.zachtronics.bot.model.om.OmScorePart.*
@@ -20,7 +28,7 @@ import java.time.ZoneOffset
 import javax.annotation.PostConstruct
 
 @Component
-class RedditLeaderboard(private val redditService: RedditService) : Leaderboard<OmCategory, OmScore, OmPuzzle> {
+class RedditLeaderboard(private val redditService: RedditService) : OmLeaderboard {
     companion object {
         private const val scoreFileName = "scores.json"
         private const val wikiPage = "index"
@@ -34,18 +42,18 @@ class RedditLeaderboard(private val redditService: RedditService) : Leaderboard<
 
     override val supportedCategories: Collection<OmCategory> = listOf(GC, GA, GX, GCP, GI, GXP, CG, CA, CX, CGP, CI, CXP, AG, AC, AX, IG, IC, IX, SG, SGP, SC, SCP, SA, SI)
 
-    override fun update(user: String, puzzle: OmPuzzle, categories: List<OmCategory>, score: OmScore, link: String): UpdateResult<OmCategory, OmScore> {
+    override fun update(user: Author, puzzle: OmPuzzle, categories: List<OmCategory>, score: OmScore, link: Link): UpdateResult {
         return redditService.access {
             val scoreFile = File(repo, scoreFileName)
             val recordList: RecordList = Json.decodeFromString(scoreFile.readText())
-            val betterExists = mutableMapOf<OmCategory, OmScore>()
-            val success = mutableMapOf<OmCategory, OmScore?>()
+            val betterExists = mutableMapOf<Category<*, *, *>, Score>()
+            val success = mutableMapOf<Category<*, *, *>, Score?>()
             for (category in categories) {
                 val oldRecord = recordList[puzzle]?.records?.find { it.category == category }
-                if (oldRecord == null || category.isBetterOrEqual(score, oldRecord.score) && oldRecord.link != link) {
+                if (oldRecord == null || category.isBetterOrEqual(score, oldRecord.score) && oldRecord.link != link.url) {
                     recordList[puzzle] = (recordList[puzzle] ?: PuzzleEntry(mutableListOf(), mutableListOf())).apply {
                         if (oldRecord != null) records.remove(oldRecord)
-                        records.add(OmRecord(category, category.normalizeScore(score), link))
+                        records.add(OmRecord(category, category.normalizeScore(score), link.url))
                     }
                     success[category] = oldRecord?.score
                 } else {
@@ -66,11 +74,11 @@ class RedditLeaderboard(private val redditService: RedditService) : Leaderboard<
             }
             when {
                 success.isNotEmpty() -> {
-                    updateRemote(scoreFile, recordList, user, puzzle, score, success.keys.map { it.displayName })
+                    updateRemote(scoreFile, recordList, user.name, puzzle, score, success.keys.map { it.displayName })
                     UpdateResult.Success(success)
                 }
                 paretoUpdate -> {
-                    updateRemote(scoreFile, recordList, user, puzzle, score, listOf("PARETO"))
+                    updateRemote(scoreFile, recordList, user.name, puzzle, score, listOf("PARETO"))
                     UpdateResult.ParetoUpdate()
                 }
                 else -> {
@@ -128,7 +136,7 @@ class RedditLeaderboard(private val redditService: RedditService) : Leaderboard<
         val suffix = File(repo, "suffix.md").readText()
         val wiki = redditService.subreddit(Subreddit.OPUS_MAGNUM).wiki()
         val content = "$prefix\n$table\n$suffix".trim()
-        if(content.lines().filter { !it.contains(dateLinePrefix) } != wiki.page(wikiPage).content.lines().filter { !it.contains(dateLinePrefix) }) {
+        if (content.lines().filter { !it.contains(dateLinePrefix) } != wiki.page(wikiPage).content.lines().filter { !it.contains(dateLinePrefix) }) {
             wiki.update(wikiPage, content, "bot update")
         }
     }

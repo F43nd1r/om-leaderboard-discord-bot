@@ -7,5 +7,4 @@ import org.springframework.context.annotation.Configuration
 @ConfigurationProperties(prefix = "discord")
 class DiscordProperties {
     lateinit var token: String
-    var debugMessages: Boolean = false
 }

@@ -2,10 +2,7 @@ package com.faendir.zachtronics.bot.discord
 
 import com.faendir.zachtronics.bot.config.DiscordProperties
 import com.faendir.zachtronics.bot.discord.commands.Command
-import com.faendir.zachtronics.bot.model.Category
 import com.faendir.zachtronics.bot.model.Game
-import com.faendir.zachtronics.bot.model.Puzzle
-import com.faendir.zachtronics.bot.model.Score
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.entities.TextChannel
@@ -17,7 +14,7 @@ import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
 
 @Service
-class DiscordService(private val discordProperties: DiscordProperties, private val commands: List<Command>, private val games: List<Game<*, *, *>>) {
+class DiscordService(private val discordProperties: DiscordProperties, private val commands: List<Command>, private val games: List<Game<*, *, *, *>>) {
     private val adapter = object : ListenerAdapter() {
         override fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
             if (!event.author.isBot) {
@@ -28,22 +25,13 @@ class DiscordService(private val discordProperties: DiscordProperties, private v
     }
     private val jda: JDA = JDABuilder.createLight(discordProperties.token, GatewayIntent.GUILD_MESSAGES).addEventListeners(adapter).build().awaitReady()
 
-    @PostConstruct
-    fun onStartup() {
-        if(discordProperties.debugMessages) {
-            games.forEach { sendMessage(it.discordChannel, "Hello, I\'m now listening to this channel!") }
-        }
-    }
-
-    private fun <C : Category<C, S, P>, S : Score, P : Puzzle> handleMessage(event: GuildMessageReceivedEvent, game: Game<C, S, P>) {
+    private fun handleMessage(event: GuildMessageReceivedEvent, game: Game<*, *, *, *>) {
         val message = event.message.contentRaw
         commands.forEach { command ->
             if (message.startsWith("!${command.name}")) {
                 event.channel.sendMessage("${event.author.asMention} ${
                     if (command.requiresRoles.isEmpty() || event.member?.roles?.map { it.name }?.containsAll(command.requiresRoles) == true) {
-                        command.regex.find(message)?.let {
-                            command.handleMessage(game, event.author, event.channel, event.message, it)
-                        } ?: "sorry, could not parse your command. Type `!help` to see the syntax."
+                        command.handleMessage(game, event.message)
                     } else {
                         "sorry, you do not have all required roles for this command ${command.requiresRoles.joinToString(separator = "`, `", prefix = "(`", postfix = "`)")}."
                     }
@@ -54,14 +42,6 @@ class DiscordService(private val discordProperties: DiscordProperties, private v
 
     fun sendMessage(channel: String, message: String) {
         jda.guilds.forEach { guild -> guild.channels.filterIsInstance<TextChannel>().find { it.name == channel }?.sendMessage(message)?.queue() }
-    }
-
-    @PreDestroy
-    fun stop() {
-        if(discordProperties.debugMessages) {
-            games.forEach { sendMessage(it.discordChannel, "Leaving now, bye!") }
-        }
-        jda.shutdown()
     }
 }
 
