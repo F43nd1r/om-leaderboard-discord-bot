@@ -4,7 +4,7 @@ import com.faendir.zachtronics.bot.main.GameContext
 import com.faendir.zachtronics.bot.utils.throwIfEmpty
 import discord4j.core.GatewayDiscordClient
 import discord4j.core.`object`.entity.User
-import discord4j.core.event.domain.InteractionCreateEvent
+import discord4j.core.event.domain.interaction.InteractionCreateEvent
 import discord4j.discordjson.json.ApplicationCommandRequest
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -50,7 +50,7 @@ class DiscordService(discordClient: GatewayDiscordClient, private val gameContex
         return Mono.defer {
             findGameContext(event)
                 .flatMap { gameContext ->
-                    val option = event.interaction.commandInteraction.options.first()
+                    val option = event.interaction.commandInteraction.orElseThrow { IllegalStateException() }.options.first()
                     val command = gameContext.commands.find { it.name == option.name }
                         ?: return@flatMap Mono.error(IllegalArgumentException("I did not recognize the command \"${option.name}\"."))
 
@@ -67,7 +67,7 @@ class DiscordService(discordClient: GatewayDiscordClient, private val gameContex
                     }
                 }
                 .flatMap { command -> command.handle(event.interaction) }
-                .flatMap { event.interactionResponse.createFollowupMessage(it, true) }
+                .flatMap { event.interactionResponse.createFollowupMessage(it) }
                 .onErrorResume {
                     logger.info("User command failed", it)
                     event.interactionResponse.createFollowupMessage("**Failed**: ${it.message ?: "Something went wrong"}")
@@ -77,7 +77,7 @@ class DiscordService(discordClient: GatewayDiscordClient, private val gameContex
     }
 
     private fun findGameContext(event: InteractionCreateEvent): Mono<GameContext> {
-        val name = event.interaction.commandInteraction.name
+        val name = event.interaction.commandInteraction.orElseThrow { IllegalStateException() }.name.orElseThrow { IllegalStateException() }
         return Mono.fromCallable<GameContext> { gameContexts.find { it.game.commandName == name } }
             .throwIfEmpty { "I did not recognize the game \"$name\"." }
     }
