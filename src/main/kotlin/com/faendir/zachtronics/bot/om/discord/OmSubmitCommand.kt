@@ -10,7 +10,7 @@ import com.faendir.zachtronics.bot.om.model.OmModifier
 import com.faendir.zachtronics.bot.om.model.OmPuzzle
 import com.faendir.zachtronics.bot.om.model.OmRecord
 import com.faendir.zachtronics.bot.om.model.OmScore
-import discord4j.core.`object`.command.Interaction
+import discord4j.core.event.domain.interaction.InteractionCreateEvent
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 import reactor.util.function.Tuple2
@@ -22,12 +22,12 @@ class OmSubmitCommand(override val leaderboards: List<Leaderboard<*, OmPuzzle, O
 
     override fun buildData() = SubmitParser.buildData()
 
-    override fun parseSubmission(interaction: Interaction): Mono<Tuple2<OmPuzzle, OmRecord>> {
+    override fun parseSubmission(interaction: InteractionCreateEvent): Mono<Tuple2<OmPuzzle, OmRecord>> {
         return SubmitParser.parse(interaction)
             .map {
                 Tuples.of(
                     it.puzzle,
-                    OmRecord(OmScore.parse(it.puzzle, it.score).apply { modifier = it.modifier ?: OmModifier.NORMAL }, it.gif, interaction.user.username)
+                    OmRecord(OmScore.parse(it.puzzle, it.score).apply { modifier = it.modifier ?: OmModifier.NORMAL }, it.gif, interaction.interaction.user.username)
                 )
             }
     }

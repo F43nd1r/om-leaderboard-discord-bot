@@ -2,7 +2,7 @@ package com.faendir.zachtronics.bot.generic.discord
 
 import com.faendir.zachtronics.bot.generic.archive.Archive
 import com.faendir.zachtronics.bot.model.Solution
-import discord4j.core.`object`.command.Interaction
+import discord4j.core.event.domain.interaction.InteractionCreateEvent
 import discord4j.discordjson.json.EmbedData
 import discord4j.discordjson.json.WebhookExecuteRequest
 import discord4j.rest.util.MultipartRequest
@@ -13,8 +13,8 @@ abstract class AbstractArchiveCommand<S : Solution> : Command {
     override val isReadOnly: Boolean = false
     protected abstract val archive: Archive<S>
 
-    override fun handle(interaction: Interaction): Mono<MultipartRequest<WebhookExecuteRequest>> {
-        return parseSolution(interaction)
+    override fun handle(event: InteractionCreateEvent): Mono<MultipartRequest<WebhookExecuteRequest>> {
+        return parseSolution(event)
             .flatMap { solution -> archive(solution) }
             .map { WebhookExecuteRequest.builder().addEmbed(it).build() }
             .map { MultipartRequest.ofRequest(it) }
@@ -36,5 +36,5 @@ abstract class AbstractArchiveCommand<S : Solution> : Command {
         }
     }
 
-    abstract fun parseSolution(interaction: Interaction): Mono<S>
+    abstract fun parseSolution(event: InteractionCreateEvent): Mono<S>
 }

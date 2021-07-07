@@ -12,6 +12,7 @@ import com.faendir.zachtronics.bot.sc.model.ScRecord;
 import com.faendir.zachtronics.bot.sz.model.SzCategory;
 import com.faendir.zachtronics.bot.sz.model.SzPuzzle;
 import com.faendir.zachtronics.bot.sz.model.SzRecord;
+import discord4j.core.event.domain.interaction.InteractionCreateEvent;
 import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.Interaction;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
@@ -35,7 +36,7 @@ public class SzShowCommand extends AbstractShowCommand<SzCategory, SzPuzzle, SzR
 
     @NotNull
     @Override
-    public Mono<Tuple2<SzPuzzle, SzCategory>> findPuzzleAndCategory(@NotNull Interaction interaction) {
+    public Mono<Tuple2<SzPuzzle, SzCategory>> findPuzzleAndCategory(@NotNull InteractionCreateEvent interaction) {
         return SzShowCommand$DataParser.parse(interaction).map(data -> Tuples.of(data.puzzle, data.category));
     }
 

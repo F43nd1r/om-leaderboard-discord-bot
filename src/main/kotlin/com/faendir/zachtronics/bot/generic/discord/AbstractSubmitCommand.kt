@@ -3,7 +3,7 @@ package com.faendir.zachtronics.bot.generic.discord
 import com.faendir.zachtronics.bot.model.*
 import com.faendir.zachtronics.bot.utils.findInstance
 import com.faendir.zachtronics.bot.utils.ifNotEmpty
-import discord4j.core.`object`.command.Interaction
+import discord4j.core.event.domain.interaction.InteractionCreateEvent
 import discord4j.discordjson.json.*
 import discord4j.rest.util.MultipartRequest
 import reactor.core.publisher.Mono
@@ -17,8 +17,8 @@ abstract class AbstractSubmitCommand<P : Puzzle, R : Record> : Command {
     override val isReadOnly: Boolean = false
     protected abstract val leaderboards: List<Leaderboard<*, P, R>>
 
-    override fun handle(interaction: Interaction): Mono<MultipartRequest<WebhookExecuteRequest>> {
-        return parseSubmission(interaction)
+    override fun handle(event: InteractionCreateEvent): Mono<MultipartRequest<WebhookExecuteRequest>> {
+        return parseSubmission(event)
             .flatMap { (puzzle, record) -> submitToLeaderboards(puzzle, record) }
             .map { MultipartRequest.ofRequest(it) }
     }
@@ -77,5 +77,5 @@ abstract class AbstractSubmitCommand<P : Puzzle, R : Record> : Command {
         }
     }
 
-    abstract fun parseSubmission(interaction: Interaction): Mono<Tuple2<P, R>>
+    abstract fun parseSubmission(interaction: InteractionCreateEvent): Mono<Tuple2<P, R>>
 }

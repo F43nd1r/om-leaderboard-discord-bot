@@ -1,6 +1,6 @@
 package com.faendir.zachtronics.bot.generic.discord
 
-import discord4j.core.`object`.command.Interaction
+import discord4j.core.event.domain.interaction.InteractionCreateEvent
 import discord4j.discordjson.json.ApplicationCommandOptionData
 import discord4j.discordjson.json.WebhookExecuteRequest
 import discord4j.rest.util.MultipartRequest
@@ -15,7 +15,7 @@ interface Command {
 
     val isReadOnly: Boolean
 
-    fun handle(interaction: Interaction): Mono<MultipartRequest<WebhookExecuteRequest>>
+    fun handle(event: InteractionCreateEvent): Mono<MultipartRequest<WebhookExecuteRequest>>
 
     fun buildData(): ApplicationCommandOptionData
 }

@@ -10,6 +10,7 @@ import com.faendir.zachtronics.bot.sc.model.ScPuzzle;
 import com.faendir.zachtronics.bot.sc.model.ScRecord;
 import com.faendir.zachtronics.bot.sc.model.ScScore;
 import com.faendir.zachtronics.bot.sc.model.ScSolution;
+import discord4j.core.event.domain.interaction.InteractionCreateEvent;
 import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.Interaction;
 import discord4j.core.object.entity.Message;
@@ -37,7 +38,7 @@ public class ScSubmitCommand extends AbstractSubmitCommand<ScPuzzle, ScRecord> {
 
     @NotNull
     @Override
-    public Mono<Tuple2<ScPuzzle, ScRecord>> parseSubmission(@NotNull Interaction interaction) {
+    public Mono<Tuple2<ScPuzzle, ScRecord>> parseSubmission(@NotNull InteractionCreateEvent interaction) {
         return ScSubmitCommand$DataParser.parse(interaction).map(data -> {
             ScScore score = ScScore.parseBPScore(data.score);
             if (score == null)

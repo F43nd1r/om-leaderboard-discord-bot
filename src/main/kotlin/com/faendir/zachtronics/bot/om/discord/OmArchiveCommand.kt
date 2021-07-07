@@ -13,19 +13,17 @@ import com.faendir.zachtronics.bot.generic.archive.Archive
 import com.faendir.zachtronics.bot.generic.discord.AbstractArchiveCommand
 import com.faendir.zachtronics.bot.generic.discord.LinkConverter
 import com.faendir.zachtronics.bot.om.JNISolutionVerifier
-import com.faendir.zachtronics.bot.om.imgur.ProductionImgurService
 import com.faendir.zachtronics.bot.om.model.*
 import com.faendir.zachtronics.bot.om.model.OmScorePart.*
 import com.faendir.zachtronics.bot.utils.filterIsInstance
 import com.faendir.zachtronics.bot.utils.throwIfEmpty
 import com.roxstudio.utils.CUrl
-import discord4j.core.`object`.command.Interaction
+import discord4j.core.event.domain.interaction.InteractionCreateEvent
 import discord4j.discordjson.json.ApplicationCommandOptionData
 import kotlinx.io.streams.asInput
 import kotlinx.io.streams.asOutput
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import org.springframework.util.ResourceUtils
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.kotlin.core.util.function.component1
@@ -41,8 +39,8 @@ class OmArchiveCommand(override val archive: Archive<OmSolution>) : AbstractArch
 
     override fun buildData(): ApplicationCommandOptionData = ArchiveParser.buildData()
 
-    override fun parseSolution(interaction: Interaction): Mono<OmSolution> {
-        return ArchiveParser.parse(interaction)
+    override fun parseSolution(event: InteractionCreateEvent): Mono<OmSolution> {
+        return ArchiveParser.parse(event)
             .map { Tuples.of(findScoreIdentifier(it), it.solution) }
             .flatMap { (identifier, link) -> parseSolution(identifier, link) }
     }

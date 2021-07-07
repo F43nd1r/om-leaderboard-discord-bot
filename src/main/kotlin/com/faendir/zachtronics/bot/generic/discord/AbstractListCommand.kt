@@ -4,7 +4,7 @@ import com.faendir.zachtronics.bot.model.Category
 import com.faendir.zachtronics.bot.model.Leaderboard
 import com.faendir.zachtronics.bot.model.Puzzle
 import com.faendir.zachtronics.bot.model.Record
-import discord4j.core.`object`.command.Interaction
+import discord4j.core.event.domain.interaction.InteractionCreateEvent
 import discord4j.discordjson.json.EmbedData
 import discord4j.discordjson.json.EmbedFieldData
 import discord4j.discordjson.json.WebhookExecuteRequest
@@ -20,8 +20,8 @@ abstract class AbstractListCommand<C : Category, P : Puzzle, R : Record> : Comma
     override val name: String = "list"
     override val isReadOnly: Boolean = true
 
-    override fun handle(interaction: Interaction): Mono<MultipartRequest<WebhookExecuteRequest>> {
-        return findPuzzleAndCategories(interaction).flatMap { (puzzle, categories) ->
+    override fun handle(event: InteractionCreateEvent): Mono<MultipartRequest<WebhookExecuteRequest>> {
+        return findPuzzleAndCategories(event).flatMap { (puzzle, categories) ->
             leaderboards.toFlux().flatMap { it.getAll(puzzle, categories) }.collectList()
                 .map { it.reduce { acc, map -> acc + map } }
                 .map { records ->
@@ -61,5 +61,5 @@ abstract class AbstractListCommand<C : Category, P : Puzzle, R : Record> : Comma
     }
 
     /** @return pair of Puzzle and all the categories that support it */
-    abstract fun findPuzzleAndCategories(interaction: Interaction): Mono<Tuple2<P, List<C>>>
+    abstract fun findPuzzleAndCategories(interaction: InteractionCreateEvent): Mono<Tuple2<P, List<C>>>
 }

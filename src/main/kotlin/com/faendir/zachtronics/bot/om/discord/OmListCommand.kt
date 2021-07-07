@@ -6,7 +6,7 @@ import com.faendir.discord4j.command.annotation.Description
 import com.faendir.zachtronics.bot.generic.discord.AbstractListCommand
 import com.faendir.zachtronics.bot.model.Leaderboard
 import com.faendir.zachtronics.bot.om.model.*
-import discord4j.core.`object`.command.Interaction
+import discord4j.core.event.domain.interaction.InteractionCreateEvent
 import discord4j.discordjson.json.ApplicationCommandOptionData
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
@@ -19,7 +19,7 @@ class OmListCommand(override val leaderboards: List<Leaderboard<OmCategory, OmPu
 
     override fun buildData(): ApplicationCommandOptionData = ListCommandParser.buildData()
 
-    override fun findPuzzleAndCategories(interaction: Interaction): Mono<Tuple2<OmPuzzle, List<OmCategory>>> {
+    override fun findPuzzleAndCategories(interaction: InteractionCreateEvent): Mono<Tuple2<OmPuzzle, List<OmCategory>>> {
         return ListCommandParser.parse(interaction).map { show -> Tuples.of(show.puzzle, OmCategory.values().filter { it.supportsPuzzle(show.puzzle) }) }
     }
 }

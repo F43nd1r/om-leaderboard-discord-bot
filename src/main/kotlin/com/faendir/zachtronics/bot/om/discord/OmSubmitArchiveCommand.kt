@@ -6,7 +6,7 @@ import com.faendir.discord4j.command.annotation.Description
 import com.faendir.zachtronics.bot.generic.discord.Command
 import com.faendir.zachtronics.bot.generic.discord.LinkConverter
 import com.faendir.zachtronics.bot.om.model.OmRecord
-import discord4j.core.`object`.command.Interaction
+import discord4j.core.event.domain.interaction.InteractionCreateEvent
 import discord4j.discordjson.json.ApplicationCommandOptionData
 import discord4j.discordjson.json.WebhookExecuteRequest
 import discord4j.rest.util.MultipartRequest
@@ -20,13 +20,13 @@ class OmSubmitArchiveCommand(private val archiveCommand: OmArchiveCommand, priva
     override val name: String = "submit-archive"
     override val isReadOnly: Boolean = false
 
-    override fun handle(interaction: Interaction): Mono<MultipartRequest<WebhookExecuteRequest>> {
-        return SubmitArchiveParser.parse(interaction).flatMap { submitArchive ->
+    override fun handle(event: InteractionCreateEvent): Mono<MultipartRequest<WebhookExecuteRequest>> {
+        return SubmitArchiveParser.parse(event).flatMap { submitArchive ->
             archiveCommand.parseSolution(archiveCommand.findScoreIdentifier(submitArchive), submitArchive.solution)
                 .flatMap { solution ->
                     Mono.zip(
                         archiveCommand.archive(solution),
-                        submitCommand.submitToLeaderboards(solution.puzzle, OmRecord(solution.score, submitArchive.gif, interaction.user.username))
+                        submitCommand.submitToLeaderboards(solution.puzzle, OmRecord(solution.score, submitArchive.gif, event.interaction.user.username))
                     )
                 }.map { (archiveOut, submitOut) -> WebhookExecuteRequest.builder().from(submitOut).addEmbed(archiveOut).build() }
         }.map { MultipartRequest.ofRequest(it) }

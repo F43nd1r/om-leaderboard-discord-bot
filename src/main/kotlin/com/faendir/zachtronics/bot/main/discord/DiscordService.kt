@@ -5,6 +5,7 @@ import com.faendir.zachtronics.bot.utils.throwIfEmpty
 import discord4j.core.GatewayDiscordClient
 import discord4j.core.`object`.entity.User
 import discord4j.core.event.domain.interaction.InteractionCreateEvent
+import discord4j.core.event.domain.interaction.SlashCommandEvent
 import discord4j.discordjson.json.ApplicationCommandRequest
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -41,16 +42,16 @@ class DiscordService(discordClient: GatewayDiscordClient, private val gameContex
                     .onErrorResume { Mono.empty() }
             }
             .subscribe()
-        discordClient.on(InteractionCreateEvent::class.java).flatMap {
+        discordClient.on(SlashCommandEvent::class.java).flatMap {
             it.acknowledge().then(handleCommand(it))
         }.subscribe()
     }
 
-    private fun handleCommand(event: InteractionCreateEvent): Mono<Void> {
+    private fun handleCommand(event: SlashCommandEvent): Mono<Void> {
         return Mono.defer {
             findGameContext(event)
                 .flatMap { gameContext ->
-                    val option = event.interaction.commandInteraction.orElseThrow { IllegalStateException() }.options.first()
+                    val option = event.options.first()
                     val command = gameContext.commands.find { it.name == option.name }
                         ?: return@flatMap Mono.error(IllegalArgumentException("I did not recognize the command \"${option.name}\"."))
 
@@ -66,7 +67,7 @@ class DiscordService(discordClient: GatewayDiscordClient, private val gameContex
                         command.toMono()
                     }
                 }
-                .flatMap { command -> command.handle(event.interaction) }
+                .flatMap { command -> command.handle(event) }
                 .flatMap { event.interactionResponse.createFollowupMessage(it) }
                 .onErrorResume {
                     logger.info("User command failed", it)

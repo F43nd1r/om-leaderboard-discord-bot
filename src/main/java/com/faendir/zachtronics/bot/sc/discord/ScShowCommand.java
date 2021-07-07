@@ -7,6 +7,7 @@ import com.faendir.zachtronics.bot.model.Leaderboard;
 import com.faendir.zachtronics.bot.sc.model.ScCategory;
 import com.faendir.zachtronics.bot.sc.model.ScPuzzle;
 import com.faendir.zachtronics.bot.sc.model.ScRecord;
+import discord4j.core.event.domain.interaction.InteractionCreateEvent;
 import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.Interaction;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
@@ -30,7 +31,7 @@ public class ScShowCommand extends AbstractShowCommand<ScCategory, ScPuzzle, ScR
 
     @NotNull
     @Override
-    public Mono<Tuple2<ScPuzzle, ScCategory>> findPuzzleAndCategory(@NotNull Interaction interaction) {
+    public Mono<Tuple2<ScPuzzle, ScCategory>> findPuzzleAndCategory(@NotNull InteractionCreateEvent interaction) {
         return ScShowCommand$DataParser.parse(interaction).map(data -> Tuples.of(data.puzzle, data.category));
     }
 

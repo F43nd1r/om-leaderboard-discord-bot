@@ -9,6 +9,7 @@ import com.faendir.zachtronics.bot.sz.discord.SzPuzzleConverter;
 import com.faendir.zachtronics.bot.sz.model.SzCategory;
 import com.faendir.zachtronics.bot.sz.model.SzPuzzle;
 import com.faendir.zachtronics.bot.sz.model.SzRecord;
+import discord4j.core.event.domain.interaction.InteractionCreateEvent;
 import discord4j.core.object.command.Interaction;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import lombok.Getter;
@@ -39,7 +40,7 @@ public class SzListCommand extends AbstractListCommand<SzCategory, SzPuzzle, SzR
 
     @NotNull
     @Override
-    public Mono<Tuple2<SzPuzzle, List<SzCategory>>> findPuzzleAndCategories(@NotNull Interaction interaction) {
+    public Mono<Tuple2<SzPuzzle, List<SzCategory>>> findPuzzleAndCategories(@NotNull InteractionCreateEvent interaction) {
         return SzListCommand$DataParser.parse(interaction)
                                        .map(Data::getPuzzle)
                                        .map(puzzle -> Tuples.of(puzzle, Arrays.stream(SzCategory.values())

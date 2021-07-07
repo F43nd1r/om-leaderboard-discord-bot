@@ -7,6 +7,7 @@ import com.faendir.zachtronics.bot.generic.discord.LinkConverter;
 import com.faendir.zachtronics.bot.sz.archive.SzArchive;
 import com.faendir.zachtronics.bot.sz.model.SzPuzzle;
 import com.faendir.zachtronics.bot.sz.model.SzSolution;
+import discord4j.core.event.domain.interaction.InteractionCreateEvent;
 import discord4j.core.object.command.Interaction;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import lombok.Getter;
@@ -29,7 +30,7 @@ public class SzArchiveCommand extends AbstractArchiveCommand<SzSolution> {
 
     @NotNull
     @Override
-    public Mono<SzSolution> parseSolution(@NotNull Interaction interaction) {
+    public Mono<SzSolution> parseSolution(@NotNull InteractionCreateEvent interaction) {
         return SzArchiveCommand$DataParser.parse(interaction).map(data -> {
             SzSolution solution;
             try (InputStream is = new URL(data.link).openStream()) {
